@@ -3,7 +3,6 @@ from typing import List
 from models import Profiles, Profile   
 
 class ProfilesDataManager:
-
     def __init__(self, profiles_path: str):        
         self.profiles_data = ProfilesDataManager.load_profiles(profiles_path)
 
@@ -19,6 +18,7 @@ class ProfilesDataManager:
         return [profile for profile in self.profiles_data.profiles.values() if profile.Extension.lower() == extension.lower()]
 
     def get_all_profiles(self) -> List[Profile]:
+        # Return a new list to prevent modification of the original data
         return list(self.profiles_data.profiles.values())
 
     @staticmethod
@@ -31,8 +31,8 @@ class ProfilesDataManager:
                 Codec=profile["Codec"],
                 Extension=profile["Extension"],
                 FFmpegSetup=profile["FFmpegSetup"],
-                SizeFactor=profile["SizeFactor"],
-                CpuFactor=profile["CpuFactor"],
+                SizeFactor=float(profile["SizeFactor"]),
+                CpuFactor=float(profile["CpuFactor"]),
                 Description=profile["Description"]
             )
             profiles_dict[profile["Profile"]] = profile_obj
