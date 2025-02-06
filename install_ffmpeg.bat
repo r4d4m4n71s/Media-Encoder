@@ -1,5 +1,4 @@
 @echo off
-setlocal EnableDelayedExpansion
 
 :: Enable logging
 set "LOGFILE=%~dp0ffmpeg_install.log"

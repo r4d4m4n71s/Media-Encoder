@@ -7,11 +7,6 @@ show_help() {
     echo "Usage: ./build.sh [target]"
     echo
     echo "Build Targets:"
-    echo "  user    - Install for regular users"
-    echo "           * Installs FFmpeg if not present"
-    echo "           * Installs core dependencies only"
-    echo "           * Installs package in regular mode"
-    echo
     echo "  local   - Set up local development environment"
     echo "           * Installs FFmpeg if not present"
     echo "           * Installs core dependencies"
@@ -37,7 +32,6 @@ show_help() {
     echo "  help    - Show this help message"
     echo
     echo "Examples:"
-    echo "  ./build.sh user    - Install for regular use"
     echo "  ./build.sh local   - Set up for development"
     echo "  ./build.sh release - Create distribution packages"
     echo "  ./build.sh encoder - Build encoder executable"
@@ -47,18 +41,6 @@ show_help() {
 chmod +x install_ffmpeg.sh
 
 case "$1" in
-    "user")
-        echo "=== Installing for regular users ==="
-        if ! command -v ffmpeg &> /dev/null; then
-            echo "Installing FFmpeg..."
-            ./install_ffmpeg.sh || exit 1
-        fi
-        
-        python3 -m pip install -r src/requirements.txt || exit 1
-        python3 -m pip install . || exit 1
-        echo "Regular installation complete"
-        ;;
-        
     "local")
         echo "=== Setting up local development environment ==="
         if ! command -v ffmpeg &> /dev/null; then
@@ -101,10 +83,23 @@ case "$1" in
         
     "encoder")
         echo "=== Building encoder executable ==="
-        if ! command -v ffmpeg &> /dev/null; then
-            echo "Installing FFmpeg..."
-            ./install_ffmpeg.sh || exit 1
-        fi
+        
+        # Install FFmpeg first
+        echo "Installing FFmpeg..."
+        ./install_ffmpeg.sh || exit 1
+        
+        # Create required directories
+        CMDS_DIR="$HOME/.local/bin"
+        mkdir -p "$CMDS_DIR"
+        mkdir -p dist/encoder/
+        
+        # Install core requirements first
+        echo "Installing core requirements..."
+        python3 -m pip install -r src/requirements.txt || exit 1
+        
+        # Install development dependencies
+        echo "Installing development dependencies..."
+        python3 -m pip install -r requirements-dev.txt || exit 1
         
         # Clean previous builds
         rm -rf dist/encoder/ build/encoder/
@@ -112,12 +107,30 @@ case "$1" in
         # Build executable using spec file
         python3 -m PyInstaller --clean encoder.spec || exit 1
         
-        # Move the executable to the correct location
-        mkdir -p dist/encoder/
-        mv dist/encoder dist/encoder/
+        # Move the executable and copy FFmpeg
+        mv dist/encoder dist/encoder/ || exit 1
         
+        # Create command shortcut
+        ENCODER_PATH="$(pwd)/dist/encoder/encoder"
+        echo '#!/bin/bash' > "$CMDS_DIR/encoder"
+        echo "\"$ENCODER_PATH\" \"\$@\"" >> "$CMDS_DIR/encoder"
+        chmod +x "$CMDS_DIR/encoder"
+        
+        # Copy FFmpeg to distribution directory if available
+        if command -v ffmpeg &> /dev/null; then
+            FFMPEG_PATH=$(command -v ffmpeg)
+            echo "Copying FFmpeg to distribution directory..."
+            cp "$FFMPEG_PATH" "dist/encoder/" || exit 1
+        fi
+        
+        echo
         echo "Encoder executable built successfully"
         echo "Available at dist/encoder/encoder"
+        echo
+        echo "Command shortcut created at: $CMDS_DIR/encoder"
+        if [[ ":$PATH:" != *":$CMDS_DIR:"* ]]; then
+            echo "Add $CMDS_DIR to your PATH to use 'encoder' from any location"
+        fi
         ;;
         
     "help"|"")
