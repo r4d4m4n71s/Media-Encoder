@@ -16,10 +16,12 @@ echo Usage: build.bat [target]
 echo.
 echo Build Targets:
 echo   user    - Install for regular users
+echo            * Installs FFmpeg if not present
 echo            * Installs core dependencies only
 echo            * Installs package in regular mode
 echo.
 echo   local   - Set up local development environment
+echo            * Installs FFmpeg if not present
 echo            * Installs core dependencies
 echo            * Installs development dependencies
 echo            * Installs package in editable mode
@@ -36,6 +38,7 @@ echo            * Requires PyPI credentials
 echo            * Must run 'release' target first
 echo.
 echo   encoder - Build encoder executable
+echo            * Installs FFmpeg if not present
 echo            * Creates encoder.exe using PyInstaller
 echo            * Output available in dist/ directory
 echo.
@@ -50,6 +53,13 @@ goto :eof
 
 :user
 echo === Installing for regular users ===
+where ffmpeg >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Installing FFmpeg...
+    call install_ffmpeg.bat
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
+
 python -m pip install -r src/requirements.txt
 if %errorlevel% neq 0 exit /b %errorlevel%
 
@@ -61,6 +71,13 @@ goto :eof
 
 :local
 echo === Setting up local development environment ===
+where ffmpeg >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Installing FFmpeg...
+    call install_ffmpeg.bat
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
+
 python -m pip install -r src/requirements.txt
 if %errorlevel% neq 0 exit /b %errorlevel%
 
@@ -108,7 +125,37 @@ goto :eof
 
 :encoder
 echo === Building encoder executable ===
-rem Clean previous builds
+
+:: Determine if we're installing from desktop or virtual environment
+set "INSTALL_FROM_DESKTOP=0"
+if "%~dp0"=="%USERPROFILE%\Desktop\" set "INSTALL_FROM_DESKTOP=1"
+if "%~dp0"=="%USERPROFILE%\OneDrive\Desktop\" set "INSTALL_FROM_DESKTOP=1"
+
+:: Check FFmpeg installation
+where ffmpeg >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Installing FFmpeg...
+    call install_ffmpeg.bat
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
+
+:: Install core requirements first
+echo Installing core requirements...
+python -m pip install -r src/requirements.txt
+
+:: Handle additional dependencies based on installation type
+if "%INSTALL_FROM_DESKTOP%"=="1" (
+    echo Desktop installation detected - installing PyInstaller...
+    python -m pip install pyinstaller==6.11.1
+) else if defined VIRTUAL_ENV (
+    echo Virtual environment detected - installing development dependencies...
+    python -m pip install -r requirements-dev.txt
+) else (
+    echo Local project installation - installing development dependencies...
+    python -m pip install -r requirements-dev.txt
+)
+
+rem Clean previous builds and temporary files
 if exist "dist\encoder" rd /s /q "dist\encoder"
 if exist "build\encoder" rd /s /q "build\encoder"
 
@@ -117,10 +164,62 @@ python -m PyInstaller --clean encoder.spec
 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-rem Move the executable to the correct location
+rem Create required directories
 if not exist "dist\encoder" mkdir "dist\encoder"
-move /Y "dist\encoder.exe" "dist\encoder\"
+set "CMDS_DIR=%USERPROFILE%\ffmpeg-cmd"
+if not exist "%CMDS_DIR%" mkdir "%CMDS_DIR%"
 
+rem Move the executable and FFmpeg to the correct location
+move /Y "dist\encoder.exe" "dist\encoder\"
+copy /Y "build\ffmpeg\bin\ffmpeg.exe" "dist\encoder\"
+
+rem Install FFmpeg first
+echo Installing FFmpeg...
+call install_ffmpeg.bat
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+rem Wait for FFmpeg installation to complete
+timeout /t 2 /nobreak >nul
+
+rem Get absolute paths
+set "ENCODER_PATH=%CD%\dist\encoder\encoder.exe"
+set "FFMPEG_PATH=%CD%\build\ffmpeg\bin\ffmpeg.exe"
+
+rem Create encoder command shortcut with absolute path
+(
+    echo @echo off
+    echo "%ENCODER_PATH%" %%*
+) > "%CMDS_DIR%\encoder.cmd"
+
+rem Copy FFmpeg files after ensuring they exist
+if exist "%CD%\build\ffmpeg\bin\ffmpeg.exe" (
+    echo Copying FFmpeg to distribution directory...
+    copy /Y "%CD%\build\ffmpeg\bin\ffmpeg.exe" "dist\encoder\"
+) else (
+    echo Error: FFmpeg files not found after installation
+    exit /b 1
+)
+
+rem Add CMDS_DIR to system PATH if not already present
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$cmdsPath = '%CMDS_DIR%'; $currentPath = [Environment]::GetEnvironmentVariable('PATH', 'User'); if ($currentPath -notlike '*' + $cmdsPath + '*') { $newPath = $currentPath + ';' + $cmdsPath; [Environment]::SetEnvironmentVariable('PATH', $newPath, 'User'); Write-Host 'Added command directory to user PATH' } else { Write-Host 'Command directory already in PATH' }"
+
+rem Clean up temporary build files
+if exist "build\encoder" rd /s /q "build\encoder"
+
+echo.
 echo Encoder executable built successfully
-echo Available at dist\encoder\encoder.exe
+if "%INSTALL_FROM_DESKTOP%"=="1" (
+    echo Desktop build completed - executable available at:
+) else if defined VIRTUAL_ENV (
+    echo Virtual environment build completed - executable available at:
+) else (
+    echo Local project build completed - executable available at:
+)
+echo dist\encoder\encoder.exe
+echo.
+echo Note: Temporary build files have been cleaned up
+echo FFmpeg has been included in the distribution directory
+echo.
+echo Command shortcut created at: %CMDS_DIR%\encoder.cmd
+echo Add %CMDS_DIR% to your PATH to use 'encoder' from any location
 goto :eof
