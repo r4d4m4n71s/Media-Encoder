@@ -6,9 +6,8 @@ including their codec settings, performance characteristics, and standard stream
 service configurations.
 """
 
-from typing import Dict
+from typing import Dict, List
 from dataclasses import dataclass
-
 
 @dataclass(frozen=True)
 class Profile:
@@ -27,7 +26,7 @@ class Profile:
         CpuFactor (float): Relative CPU usage factor for encoding (1.0 = baseline)
         Description (str): Detailed description of the profile's characteristics
     """
-    Profile: str
+    Name: str
     Codec: str
     Extension: str
     FFmpegSetup: str
@@ -35,20 +34,11 @@ class Profile:
     CpuFactor: float
     Description: str
 
-
 @dataclass(frozen=True)
-class Profiles:
-    """
-    Container class for multiple audio encoding profiles.
-    
-    This class manages a collection of Profile instances, allowing easy access
-    to different encoding profiles by their names.
-    
-    Attributes:
-        profiles (Dict[str, Profile]): Dictionary of Profile instances, keyed by profile name
-    """
-    profiles: Dict[str, Profile]
-
+class Argument:
+    Name: str
+    Default: str
+    Description: str
 
 class ProfileConstants:
     """

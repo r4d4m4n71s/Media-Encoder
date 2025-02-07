@@ -1,33 +1,19 @@
 from utils import JsonLoader
-from typing import List
-from models import Profiles, Profile   
+from typing import Dict, List
+from models import Profile, Argument   
 
-class ProfilesDataManager:
-    def __init__(self, profiles_path: str):        
-        self.profiles_data = ProfilesDataManager.load_profiles(profiles_path)
+class ProfileDataManager:
 
-    def get_profile_by_name(self, profile_name: str) -> Profile:
-        if profile_name in self.profiles_data.profiles:
-            return self.profiles_data.profiles[profile_name]
-        raise ValueError(f"Profile '{profile_name}' not found")
+    def __init__(self):        
+        self.profiles: List[Profile] = None
+        self.arguments: List[Argument] = None
 
-    def get_profiles_by_codec(self, codec: str) -> List[Profile]:
-        return [profile for profile in self.profiles_data.profiles.values() if profile.Codec.lower() == codec.lower()]
-
-    def get_profiles_by_extension(self, extension: str) -> List[Profile]:
-        return [profile for profile in self.profiles_data.profiles.values() if profile.Extension.lower() == extension.lower()]
-
-    def get_all_profiles(self) -> List[Profile]:
-        # Return a new list to prevent modification of the original data
-        return list(self.profiles_data.profiles.values())
-
-    @staticmethod
-    def load_profiles(profiles_path: str) -> Profiles:
+    def load_profiles(self, profiles_path: str) :
         data = JsonLoader(profiles_path).load()
-        profiles_dict = {}
-        for profile in data["profiles"]:
+        profiles_lst = []
+        for profile in data["Profiles"]:
             profile_obj = Profile(
-                Profile=profile["Profile"],
+                Name=profile["Name"],
                 Codec=profile["Codec"],
                 Extension=profile["Extension"],
                 FFmpegSetup=profile["FFmpegSetup"],
@@ -35,5 +21,39 @@ class ProfilesDataManager:
                 CpuFactor=float(profile["CpuFactor"]),
                 Description=profile["Description"]
             )
-            profiles_dict[profile["Profile"]] = profile_obj
-        return Profiles(profiles=profiles_dict)
+            profiles_lst.append(profile_obj)            
+        self.profiles = profiles_lst
+        return self
+
+    def load_arguments(self, globals_args_path: str):
+        data =  JsonLoader(globals_args_path).load()
+        self.arguments = [Argument(**argument) for argument in data]
+        return self
+
+    def get_profile_by_name(self, profile_name: str) -> Profile:
+        for profile in self.profiles:
+            if profile_name.lower() == profile.Name.lower():
+                return profile
+        raise ValueError(f"Profile '{profile_name}' not found")
+
+    def get_profiles_by_codec(self, codec: str) -> Dict[str, Profile]:
+        return [profile for profile in self.profiles.values() if profile.Codec.lower() == codec.lower()]
+
+    def get_profiles_by_extension(self, extension: str) -> Dict[str, Profile]:
+        return [profile for profile in self.profiles.values() if profile.Extension.lower() == extension.lower()]
+    
+    @staticmethod
+    def get_FFmpegSetup_as_dict(profile:Profile)->Dict[str,str]:
+        # Return FFmpegSetup as dict str
+        return dict(item.strip().split("=") for item in profile.FFmpegSetup.split(","))
+
+    def get_arguments_as_dict(self)->Dict[str,str]:
+        arguments_as_dic: Dict[str, Argument] = {}
+        for argument in self.arguments:
+            arguments_as_dic[argument.Name] = argument.Default
+        return arguments_as_dic
+        
+
+    
+
+    

@@ -1,1 +1,7 @@
-src/config/__pycache__/create_readme.cpython-313.pyc
+__pycache__
+*.egg-info
+.venv
+*.log
+*.pyc
+build
+dist

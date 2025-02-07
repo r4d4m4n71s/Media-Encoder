@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Install Library Dependencies",
+            "label": "Install library dependencies",
             "type": "shell",
             "command": "python -m pip install -r src/requirements.txt",
             "group": "build",
@@ -12,60 +12,9 @@
             }
         },
         {
-            "label": "Install Dev Dependencies",
+            "label": "Install develop dependencies",
             "type": "shell",
             "command": "python -m pip install -r requirements-dev.txt",
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Development Setup",
-            "type": "shell",
-            "command": "python -m pip install -e .",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "dependsOn": [
-                "Install Library Dependencies",
-                "Install Dev Dependencies"
-            ],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Test and Build",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Development Setup",
-                "Run Tests",
-                "Build Package"
-            ],
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Run Tests",
-            "type": "shell",
-            "command": "python -m pytest tests -v --cov=src",
-            "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Build Package",
-            "type": "shell",
-            "command": "python -m build --wheel --sdist",
             "group": "build",
             "presentation": {
                 "reveal": "always",
