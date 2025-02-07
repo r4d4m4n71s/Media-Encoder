@@ -1,0 +1,55 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [        
+        {
+            "name": "/",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}",
+                "FFMPEG_PATH": "${workspaceRoot}/dist/ffmpeg.exe",
+                "FFMPEG_PROFILES_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.profiles.json",
+                "FFMPEG_GLOBALARGS_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.arguments.json",
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "/src",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}/src",
+                "FFMPEG_PATH": "${workspaceRoot}/dist/ffmpeg.exe",
+                "FFMPEG_PROFILES_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.profiles.json",
+                "FFMPEG_GLOBALARGS_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.arguments.json"
+            },
+            "justMyCode": true
+        },        
+        {
+            "name": "test gui conversion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}/src",
+                "FFMPEG_PATH": "${workspaceRoot}/dist/ffmpeg.exe",
+                "FFMPEG_PROFILES_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.profiles.json",
+                "FFMPEG_GLOBALARGS_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.arguments.json"
+            },
+            "args": [
+                "${workspaceRoot}/tests/output/test.flac",
+                "${workspaceRoot}/tests/output/output.flac",
+                "\"FLAC Uncompressed 24bit 192kHz\""
+                //"--profiles"
+            ]
+        }
+    ]
+}

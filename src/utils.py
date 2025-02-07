@@ -1,5 +1,5 @@
 import json
-from __init__ import get_logger
+from config import get_logger
 
 class JsonLoader:
 
@@ -14,9 +14,9 @@ class JsonLoader:
             cls._instances[file_path]._file_path = file_path
         return cls._instances[file_path]
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, logger: logger = None): # type: ignore
         # Initialization logic (if any)
-        pass
+        self.logger = logger if logger is not None else get_logger(__name__)
 
     def load(self):
         """Load JSON data from the file associated with this instance."""

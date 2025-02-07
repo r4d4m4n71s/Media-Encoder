@@ -1,0 +1,32 @@
+[    
+    {
+        "Name": "-nostdin",
+        "Default": "",
+        "Description": "Disable interaction with standard input."
+    },
+    {
+        "Name": "-level",
+        "Default": "-8",
+        "Description": "Controls the verbosity of logs. Options: quiet, panic, fatal, error, warning, info, verbose, debug, trace."
+    },
+    {
+        "Name": "-stats",
+        "Default": "",
+        "Description": "Print progress report during encoding."
+    },
+    {
+        "Name": "-benchmark",
+        "Default": "",
+        "Description": "Measures execution time and memory usage."
+    },
+    {
+        "Name": "-timelimit",
+        "Default": "60",
+        "Description": "Set maximum runtime in seconds."
+    },
+    {
+        "Name": "-map_metadata",
+        "Default": "0",
+        "Description": "Add metadata to the output file (0 = yes, -1 = no)."
+    }
+]

@@ -1,7 +1,7 @@
 {
-    "profiles": [
+    "Profiles": [
       {
-        "Profile": "MP3 Standard 320kbps",
+        "Name": "MP3 Standard 320kbps",
         "Codec": "MP3",
         "Extension": ".mp3",
         "FFmpegSetup": "acodec=libmp3lame, b:a=320k, ar=44100",
@@ -10,7 +10,7 @@
         "Description": "Standard-quality MP3, 320kbps"
       },
       {
-        "Profile": "Apple Music (Lossless)",
+        "Name": "Apple Music (Lossless)",
         "Codec": "ALAC",
         "Extension": ".m4a",
         "FFmpegSetup": "acodec=alac, ar=44100, sample_fmt=s16",
@@ -19,7 +19,7 @@
         "Description": "Standard lossless audio"
       },
       {
-        "Profile": "WAV (24-bit, 44.1 kHz)",
+        "Name": "WAV (24-bit, 44.1 kHz)",
         "Codec": "WAV",
         "Extension": ".wav",
         "FFmpegSetup": "acodec=pcm_s24le, ar=44100, sample_fmt=s32",
@@ -28,7 +28,7 @@
         "Description": "Standard-quality uncompressed WAV"
       },
       {
-        "Profile": "Spotify HiFi (Lossless)",
+        "Name": "Spotify HiFi (Lossless)",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=8, ar=44100, sample_fmt=s16",
@@ -37,7 +37,7 @@
         "Description": "CD-quality lossless audio"
       },
       {
-        "Profile": "Tidal HiFi",
+        "Name": "Tidal HiFi",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=8, ar=44100, sample_fmt=s16",
@@ -46,7 +46,7 @@
         "Description": "CD-quality lossless audio"
       },
       {
-        "Profile": "Amazon Music HD (Standard Lossless)",
+        "Name": "Amazon Music HD (Standard Lossless)",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=8, ar=44100, sample_fmt=s16",
@@ -55,7 +55,7 @@
         "Description": "Standard lossless streaming"
       },
       {
-        "Profile": "Qobuz Studio (CD Quality)",
+        "Name": "Qobuz Studio (CD Quality)",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=8, ar=44100, sample_fmt=s16",
@@ -64,7 +64,7 @@
         "Description": "CD-quality lossless streaming"
       },
       {
-        "Profile": "Deezer HiFi",
+        "Name": "Deezer HiFi",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=8, ar=44100, sample_fmt=s16",
@@ -73,7 +73,7 @@
         "Description": "CD-quality lossless streaming"
       },
       {
-        "Profile": "Napster HiFi",
+        "Name": "Napster HiFi",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=8, ar=44100, sample_fmt=s16",
@@ -82,7 +82,7 @@
         "Description": "CD-quality lossless streaming"
       },
       {
-        "Profile": "YouTube Music Premium (High Quality)",
+        "Name": "YouTube Music Premium (High Quality)",
         "Codec": "Opus",
         "Extension": ".opus",
         "FFmpegSetup": "acodec=libopus, b:a=160k, ar=48000",
@@ -91,7 +91,7 @@
         "Description": "High-efficiency lossy streaming"
       },
       {
-        "Profile": "Apple Music (Hi-Res Lossless)",
+        "Name": "Apple Music (Hi-Res Lossless)",
         "Codec": "ALAC",
         "Extension": ".m4a",
         "FFmpegSetup": "acodec=alac, ar=192000, sample_fmt=s32",
@@ -100,7 +100,7 @@
         "Description": "Hi-Res lossless, ultra-high fidelity"
       },
       {
-        "Profile": "Amazon Music Ultra HD (Hi-Res Lossless)",
+        "Name": "Amazon Music Ultra HD (Hi-Res Lossless)",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=12, ar=192000, sample_fmt=s32",
@@ -109,7 +109,7 @@
         "Description": "Hi-Res lossless streaming"
       },
       {
-        "Profile": "Qobuz Sublime (Hi-Res)",
+        "Name": "Qobuz Sublime (Hi-Res)",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=12, ar=192000, sample_fmt=s32",
@@ -118,7 +118,7 @@
         "Description": "Hi-Res lossless audio"
       },
       {
-        "Profile": "Tidal Master (MQA)",
+        "Name": "Tidal Master (MQA)",
         "Codec": "FLAC (MQA)",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=12, ar=96000, sample_fmt=s32",
@@ -127,7 +127,7 @@
         "Description": "High-resolution MQA audio (requires unfolding)"
       },
       {
-        "Profile": "FLAC Uncompressed 24bit 192kHz",
+        "Name": "FLAC Uncompressed 24bit 192kHz",
         "Codec": "FLAC",
         "Extension": ".flac",
         "FFmpegSetup": "acodec=flac, compression_level=0, ar=192000, sample_fmt=s32",

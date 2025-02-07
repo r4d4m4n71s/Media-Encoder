@@ -1,0 +1,6 @@
+2025-02-07T16:51:57.908434-0500 DEBUG FFmpeg command: -i D:\SoftwareProjects\Media-Encoder/tests/output/test.flac -acodec flac -ar 192000 -compression_level 0 -sample_fmt s32 D:\SoftwareProjects\Media-Encoder/tests/output/output.flac -nostdin -level -8 -stats -benchmark -timelimit 60 -map_metadata 0
+2025-02-07T16:53:18.291664-0500 DEBUG FFmpeg command: -i D:\SoftwareProjects\Media-Encoder/tests/output/test.flac D:\SoftwareProjects\Media-Encoder/tests/output/output.flac
+2025-02-07T16:53:18.293826-0500 DEBUG Executing FFmpeg command for: D:\SoftwareProjects\Media-Encoder/tests/output/test.flac
+2025-02-07T16:57:28.834415-0500 DEBUG FFmpeg command: -i D:\SoftwareProjects\Media-Encoder/tests/output/test.flac D:\SoftwareProjects\Media-Encoder/tests/output/output.flac
+2025-02-07T16:57:28.835929-0500 DEBUG Executing FFmpeg command for: D:\SoftwareProjects\Media-Encoder/tests/output/test.flac
+2025-02-07T16:57:34.438996-0500 INFO Successfully re-encoded: D:\SoftwareProjects\Media-Encoder/tests/output/output.flac

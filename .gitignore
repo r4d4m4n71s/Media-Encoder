@@ -1,10 +1,7 @@
-src/config/__pycache__/create_readme.cpython-313.pyc
-media_encoder.egg-info
+__pycache__
+*.egg-info
 .venv
+*.log
+*.pyc
 build
-app.log
 dist
-ffmpeg_install.log
-app.log
-app.log
-app.log
