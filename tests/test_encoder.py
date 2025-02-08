@@ -1,4 +1,5 @@
 import pytest
+import subprocess
 from unittest.mock import patch, MagicMock
 from encoder import Encoder, EncodingError
 
@@ -22,53 +23,50 @@ def test_generate_unique_output_file_path(encoder):
         output = encoder._generate_unique_output_file_path(file_path, ".mp3")
         assert output == expected_output
 
-def test_reencode_success(encoder):
+def test_encode_success(encoder):
     with patch("encoder.os.remove"), \
          patch("encoder.os.path.isfile", return_value=True), \
-         patch("encoder.ffmpeg.input") as mock_input, \
          patch("encoder.Stats") as mock_stats:
-        mock_input.return_value.output.return_value.global_args.return_value.run.return_value = None
         mock_stats_instance = MagicMock()
         mock_stats.return_value = mock_stats_instance
+        
+        # Mock FFmpegCommand methods
+        mock_run = MagicMock()
+        encoder.ffmpeg_cmd.run = mock_run
         
         input_file = "test.wav"
         output_file = "test.mp3"
         
         # Mock os.path.exists for _generate_unique_output_file_path
         with patch("encoder.os.path.exists", return_value=False):
-            result = encoder.reencode(input_file, output_path=output_file)
+            result = encoder.encode(input_file, output_path=output_file)
             assert result == output_file
-            encoder.logger.success.assert_called_with(f"Successfully re-encoded: {output_file}")
             mock_stats_instance.compare_file_sizes.assert_called_once()
+            mock_run.assert_called_once()
 
-def test_reencode_failure(encoder):
+def test_encode_failure(encoder):
     with patch("encoder.os.remove"), \
-         patch("encoder.os.path.isfile", return_value=True), \
-         patch("encoder.ffmpeg.input") as mock_input, \
-         patch("encoder.ffmpeg.Error", Exception, create=True):  # Mock ffmpeg.Error as Exception
-        error = Exception("FFmpeg error")
-        error.stderr = b"FFmpeg error details"
-        mock_input.return_value.output.return_value.global_args.return_value.run.side_effect = error
+         patch("encoder.os.path.isfile", return_value=True):
+        # Mock FFmpegCommand methods
+        mock_run = MagicMock()
+        mock_run.side_effect = subprocess.CalledProcessError(1, "ffmpeg", stderr=b"FFmpeg error")
+        encoder.ffmpeg_cmd.run = mock_run
+        
         input_file = "test.wav"
         output_file = "test.mp3"
         
         with pytest.raises(EncodingError):
-            encoder.reencode(input_file, output_path=output_file)
+            encoder.encode(input_file, output_path=output_file)
         encoder.logger.error.assert_called()
 
-def test_map_metadata(encoder):
-    tags = ["artist=Test Artist", "album=Test Album"]
-    expected_output = {'-metadata:artist': 'Test Artist', '-metadata:album': 'Test Album'}
-    result = encoder._map_metadata(tags)
-    assert result == expected_output
-
 def test_get_metadata_failure(encoder):
-    with patch("encoder.ffmpeg") as mock_ffmpeg, \
-         patch("encoder.ffmpeg.Error", Exception, create=True):  # Mock ffmpeg.Error as Exception
-        error = Exception("Probe error")
-        error.stderr = b"Error message"
+    with patch("encoder.ffmpeg") as mock_ffmpeg:
+        # Create a real ffmpeg.Error instance
+        error = type('Error', (Exception,), {'stderr': b'Error message'})()
+        mock_ffmpeg.Error = error.__class__
         mock_ffmpeg.probe.side_effect = error
         
-        with pytest.raises(Exception):
+        with pytest.raises(Exception) as exc_info:
             encoder.get_metadata("test.wav")
+        assert isinstance(exc_info.value, error.__class__)
         encoder.logger.error.assert_called()

@@ -86,7 +86,7 @@ class Encoder:
         try:            
             # add default output args
             output_args: dict[str,str] = ProfileDataManager.get_FFmpegSetup_as_dict(self.profile)
-                                                                
+                                                                 
             # add user output args
             output_args.update(ffmpeg_output_args or {})
             
@@ -104,12 +104,9 @@ class Encoder:
             
             ffmpeg_command = ffmpeg_command.global_args(global_args_formated)
             ffmpeg_command = ffmpeg_command.output_args(output_args)
-            ffmpeg_command = ffmpeg_command.metadata(metadata_tags)
+            if metadata_tags:
+                ffmpeg_command = ffmpeg_command.metadata(metadata_tags)
                                     
-            # Add overwrite flag
-            #if input_file_path == output_path:
-                #ffmpeg_command = ffmpeg_command.overwrite_output()
-                        
             ffmpeg_command.run(capture_stdout=True, capture_stderr=True)
             
             # check the stats
@@ -267,7 +264,8 @@ class FFmpegCommand:
 
     def metadata(self, metadata_dict):
         """Set metadata options."""
-        self.metadata_options.update(metadata_dict)
+        if metadata_dict:
+            self.metadata_options.update(metadata_dict)
         return self  # Fluent API
 
     def output_args(self, output_dict):
@@ -312,7 +310,7 @@ class FFmpegCommand:
         # Set subprocess options for capturing output
         stdout_option = subprocess.PIPE if capture_stdout else None
         stderr_option = subprocess.PIPE if capture_stderr else None
-               
+                
         try:
             self.logger.debug("Running FFmpeg command:", " ".join(command))
             process = subprocess.run(command, check=True, stdout=stdout_option, stderr=stderr_option, text=True)
@@ -332,4 +330,4 @@ class FFmpegCommand:
             return info
         except ffmpeg.Error as e:
             self.logger.error("Error probing file:", e)
-            return None
+            raise
