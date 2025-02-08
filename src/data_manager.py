@@ -36,11 +36,19 @@ class ProfileDataManager:
                 return profile
         raise ValueError(f"Profile '{profile_name}' not found")
 
-    def get_profiles_by_codec(self, codec: str) -> Dict[str, Profile]:
-        return [profile for profile in self.profiles.values() if profile.Codec.lower() == codec.lower()]
+    def get_profiles_by_codec(self, codec: str) -> List[Profile]:
+        profiles = []
+        for profile in self.profiles:
+            if profile.Codec.lower() == codec.lower():
+                profiles.append(profile)
+        return profiles
 
-    def get_profiles_by_extension(self, extension: str) -> Dict[str, Profile]:
-        return [profile for profile in self.profiles.values() if profile.Extension.lower() == extension.lower()]
+    def get_profiles_by_extension(self, extension: str) -> List[Profile]:
+        profiles = []
+        for profile in self.profiles:
+            if profile.Extension.lower() == extension.lower():
+                profiles.append(profile)
+        return profiles
     
     @staticmethod
     def get_FFmpegSetup_as_dict(profile:Profile)->Dict[str,str]:

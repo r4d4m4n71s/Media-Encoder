@@ -12,7 +12,7 @@ def encoder():
         mock_profile_manager.return_value.load_profiles.return_value.get_profile_by_name.return_value = mock_profile
         mock_profile_manager.return_value.load_arguments.return_value.get_arguments_as_dict.return_value = {}
         
-        return Encoder(profile_name="test_profile", logger=mock_logger)
+        return Encoder(profile="test_profile", logger=mock_logger)
 
 def test_generate_unique_output_file_path(encoder):
     # First call returns True to simulate existing file, second call False for non-existing file
