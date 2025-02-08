@@ -1,6 +1,19 @@
 @echo off
+rem Define the virtual environment directory
+set VENV_DIR=.venv
+
+rem Check if virtual environment exists
+if not exist "%VENV_DIR%" (
+    echo Virtual environment not found. Creating one...
+    python -m venv %VENV_DIR%
+)
+
+rem Activate the virtual environment
+call %VENV_DIR%\Scripts\activate.bat
+
 echo Installing dependencies...
-python -m pip install -r requirements-dev.txt
+%VENV_DIR%\Scripts\python.exe -m pip install --upgrade pip
+%VENV_DIR%\Scripts\python.exe -m pip install -r requirements-dev.txt
 
 echo Creating dist directory...
 if not exist "dist" mkdir dist
