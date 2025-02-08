@@ -3,7 +3,7 @@ import os
 from typing import List, Dict, Optional
 from loguru import logger
 from data_manager import ProfileDataManager
-from config import *
+from config import FFMPEG_PROFILES_PATH, FFMPEG_GLOBALARGS_PATH, FFMPEG_PATH, get_logger
 
 class EncodingError(Exception):
     """Custom exception for processing errors."""
@@ -214,7 +214,8 @@ class Encoder:
             ffmpeg.Error: If metadata retrieval fails
         """
         try:
-            return ffmpeg.probe(file_path)
+            probe_path = FFMPEG_PATH.replace('ffmpeg.exe', 'ffprobe.exe')
+            return ffmpeg.probe(file_path, cmd=probe_path)
         except ffmpeg.Error as e:
             error_message = e.stderr.decode('utf-8')
             self.logger.error(f"Error retrieving metadata for {file_path}: {error_message}")

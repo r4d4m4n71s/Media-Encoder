@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "env": {
                 "PYTHONPATH": "${workspaceRoot}",
-                "FFMPEG_PATH": "${workspaceRoot}/dist/ffmpeg.exe",
+                "FFMPEG_PATH": "${workspaceRoot}\\dist\\ffmpeg.exe",
                 "FFMPEG_PROFILES_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.profiles.json",
                 "FFMPEG_GLOBALARGS_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.arguments.json",
             },

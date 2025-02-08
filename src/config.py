@@ -4,7 +4,7 @@ from loguru import logger
 def resolve_to_root(path:str):
     return os.path.join(os.getcwd(), path)
 
-FFMPEG_PATH = os.environ.get("FFMPEG_PATH", resolve_to_root("dist/ffmpeg.exe"))
+FFMPEG_PATH = os.environ.get("FFMPEG_PATH", resolve_to_root("dist\\ffmpeg.exe"))
 FFMPEG_PROFILES_PATH = os.environ.get("FFMPEG_PROFILES_PATH", resolve_to_root("src/config/ffmpeg.audio.profiles.json"))
 FFMPEG_GLOBALARGS_PATH = os.environ.get("FFMPEG_GLOBALARGS_PATH", resolve_to_root("src/config/ffmpeg.audio.arguments.json"))
 
