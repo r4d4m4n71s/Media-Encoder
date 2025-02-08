@@ -14,10 +14,36 @@ jobs:
       with:
         python-version: '3.11'
         
+    # Cache pip dependencies
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    # Cache FFmpeg apt package
+    - name: Cache FFmpeg
+      uses: actions/cache@v3
+      id: cache-ffmpeg
+      with:
+        path: ~/ffmpeg-cache
+        key: ${{ runner.os }}-ffmpeg-${{ hashFiles('~/.cache/apt/archives/ffmpeg*.deb') || 'not-exists' }}
+        
     - name: Install FFmpeg
+      if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        mkdir -p ~/ffmpeg-cache
+        cd ~/ffmpeg-cache
+        apt-get download ffmpeg
+        sudo apt-get install -y ./ffmpeg*.deb
+        
+    - name: Install FFmpeg from cache
+      if: steps.cache-ffmpeg.outputs.cache-hit == 'true'
+      run: |
+        sudo apt-get install -y ~/ffmpeg-cache/ffmpeg*.deb
         
     - name: Install dependencies
       run: |
@@ -27,4 +53,4 @@ jobs:
         
     - name: Run tests
       run: |
-        pytest tests/ -v --cov=test
+        pytest tests/ -v --cov=tests --cov-report=term-missing:skip-covered
