@@ -1,9 +1,10 @@
 import ffmpeg
+import subprocess
 import os
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 from loguru import logger
-from data_manager import ProfileDataManager
-from config import *
+from data_manager import ProfileDataManager, Profile
+from config import FFMPEG_PROFILES_PATH, FFMPEG_GLOBALARGS_PATH, FFMPEG_PATH, FFPROBE_PATH, get_logger
 
 class EncodingError(Exception):
     """Custom exception for processing errors."""
@@ -13,7 +14,7 @@ class Encoder:
     """
     A class to handle encoding and metadata manipulation using FFmpeg.
     """
-    def __init__(self, profile_name:str, logger: logger = None): # type: ignore
+    def __init__(self, profile, logger: logger = None): # type: ignore
         """
         Initialize the Reencoder with the codec configuration.
 
@@ -24,9 +25,13 @@ class Encoder:
         Raises:
             ValueError: If codec is None or invalid.
         """
-        self.logger = logger if logger is not None else get_logger(__name__)
+        if isinstance(profile, str):
+            self.profile = ProfileDataManager().load_profiles(FFMPEG_PROFILES_PATH).get_profile_by_name(profile)  
+        elif isinstance(profile, Profile):
+            self.profile = profile
 
-        self.profile = ProfileDataManager().load_profiles(FFMPEG_PROFILES_PATH).get_profile_by_name(profile_name)   
+        self.logger = logger if logger is not None else get_logger(__name__)        
+        self.ffmpeg_cmd = FFmpegCommand(FFMPEG_PATH)
     
     # Use ffmpeg-python to copy streams without re-encoding
     def copy(
@@ -34,20 +39,25 @@ class Encoder:
         input_file_path: str,
         output_path: Optional[str] = None,
         delete_original: bool = False,
-        metadata_tags: Optional[List[str]] = None,
+        metadata_tags: Optional[Dict[str, str]] = None,
         ffmpeg_output_args: Optional[Dict[str, str]] = None,
         ffmpeg_global_args: Optional[Dict[str, str]] = None
     ) -> Optional[str]:
-        self.logger.info("Copying..")
-        ffmpeg_output_args.update({'c':'copy'})        
-        return self.reencode(input_file_path, output_path, delete_original, metadata_tags, ffmpeg_output_args, ffmpeg_global_args)
+        self.logger.info("Copying...")
 
-    def reencode(
+        if ffmpeg_output_args:
+            ffmpeg_output_args.update({'c':'copy'})
+        else:    
+            ffmpeg_output_args = {'c':'copy'}
+            
+        return self.encode(input_file_path, output_path, delete_original, metadata_tags, ffmpeg_output_args, ffmpeg_global_args)
+
+    def encode(
         self,
         input_file_path: str,
         output_path: Optional[str] = None,
         delete_original: bool = False,
-        metadata_tags: Optional[List[str]] = None,
+        metadata_tags: Optional[Dict[str, str]] = None,
         ffmpeg_output_args: Optional[Dict[str, str]] = None,
         ffmpeg_global_args: Optional[Dict[str, str]] = None
     ) -> Optional[str]:
@@ -75,16 +85,13 @@ class Encoder:
         
         try:            
             # add default output args
-            output_args: dict[str,str]= ProfileDataManager.get_FFmpegSetup_as_dict(self.profile)
-                                                                
+            output_args: dict[str,str] = ProfileDataManager.get_FFmpegSetup_as_dict(self.profile)
+                                                                 
             # add user output args
             output_args.update(ffmpeg_output_args or {})
             
-            # add user metadata tags
-            output_args.update(self._map_metadata(metadata_tags) or {})
-                        
             # add default global args
-            global_args:dict[str,str] = ProfileDataManager().load_arguments(FFMPEG_GLOBALARGS_PATH).get_arguments_as_dict()      
+            global_args: dict[str,str] = ProfileDataManager().load_arguments(FFMPEG_GLOBALARGS_PATH).get_arguments_as_dict()      
 
             # add user global args
             global_args.update(ffmpeg_global_args or {})                        
@@ -93,24 +100,15 @@ class Encoder:
             global_args_formated = self._format_global_args(global_args)
             
             # Create the FFmpeg command
-            ffmpeg_command = (
-                ffmpeg
-                .input(input_file_path)
-                .output(output_file_path, **output_args)            
-                .global_args(*global_args_formated)
-            )            
-                        
-            # Debug log the final command
-            self.logger.debug(f"FFmpeg command: {' '.join(ffmpeg_command.get_args())}")
+            ffmpeg_command = self.ffmpeg_cmd.input(input_file_path).output(output_file_path)
             
-            # Add overwrite flag
-            if input_file_path == output_path:
-                ffmpeg_command = ffmpeg_command.overwrite_output()
-                        
-            self.logger.debug(f"Executing FFmpeg command for: {input_file_path}")
-            ffmpeg_command.run(capture_stdout=True, capture_stderr=True, cmd=FFMPEG_PATH    )
-            self.logger.success(f"Successfully re-encoded: {output_file_path}")
-
+            ffmpeg_command = ffmpeg_command.global_args(global_args_formated)
+            ffmpeg_command = ffmpeg_command.output_args(output_args)
+            if metadata_tags:
+                ffmpeg_command = ffmpeg_command.metadata(metadata_tags)
+                                    
+            ffmpeg_command.run(capture_stdout=True, capture_stderr=True)
+            
             # check the stats
             Stats(input_file_path, output_file_path).compare_file_sizes()
 
@@ -122,18 +120,6 @@ class Encoder:
                 except OSError as e:
                     self.logger.warning(f"Failed to delete original file {input_file_path}: {str(e)}")
 
-        except ffmpeg.Error as e:
-            # Handle FFmpeg-specific errors
-            error_detail = str(e)
-            if hasattr(e, 'stderr') and e.stderr:
-                error_detail = e.stderr.decode('utf-8')
-            if hasattr(e, 'stdout') and e.stdout:
-                stdout = e.stdout.decode('utf-8')
-                if stdout:
-                    error_detail = f"{error_detail}\n{stdout}" if error_detail else stdout
-
-            self.logger.error(f"FFmpeg error during re-encoding: {input_file_path}:\n{error_detail}")
-            raise EncodingError(f"FFmpeg error re-encoding {input_file_path}: {error_detail}") from e
         except OSError as e:
             # Handle file system related errors
             error_msg = str(e)
@@ -181,25 +167,6 @@ class Encoder:
                 return path
             counter += 1
 
-    def _map_metadata(self, tags: Optional[List[str]]) -> dict[str,str]:       
-        
-        metadata_dict:dict[str,str]={}
-        if not tags:
-            return metadata_dict
-        
-            if not all(isinstance(tag, str) for tag in tags):
-                raise ValueError("All metadata tags must be strings")
-            if any(not tag.strip() for tag in tags):
-                raise ValueError("Metadata tags cannot be empty strings")
-            
-        for tag in tags:
-            if '=' in tag:
-                key, value = tag.split('=', 1)
-                metadata_dict.update({key: value})
-
-         # set metadata as argument
-        return {f'-metadata:{k}': v for k, v in metadata_dict.items()}                                    
-
     def get_metadata(self, file_path: str) -> dict:
         """
         Get metadata of the file.
@@ -214,7 +181,7 @@ class Encoder:
             ffmpeg.Error: If metadata retrieval fails
         """
         try:
-            return ffmpeg.probe(file_path)
+            return self.ffmpeg_cmd.probe(file_path, cmd=FFPROBE_PATH)
         except ffmpeg.Error as e:
             error_message = e.stderr.decode('utf-8')
             self.logger.error(f"Error retrieving metadata for {file_path}: {error_message}")
@@ -256,8 +223,8 @@ class Stats:
         input_size = self.get_file_size(self.input_file)
         output_size = self.get_file_size(self.output_file)
 
-        logger.info(f"Source file size: {self.format_size(input_size)}")
-        logger.info(f"Output file size: {self.format_size(output_size)}")
+        logger.debug(f"Source file size: {self.format_size(input_size)}")
+        logger.debug(f"Output file size: {self.format_size(output_size)}")
 
         size_difference = output_size - input_size
         size_ratio = output_size / input_size
@@ -270,3 +237,96 @@ class Stats:
             logger.info("The output file is the same size as the source file.")
 
         logger.success(f"Size ratio (output/source): {size_ratio:.2f}")
+
+
+class FFmpegCommand:
+    
+    def __init__(self, ffmpeg_path="ffmpeg", logger: logger = None): # type: ignore
+        """Initialize the FFmpeg command builder."""
+        self.ffmpeg_path = ffmpeg_path
+        self.input_file = None
+        self.output_file = None  # optional
+        self.metadata_options = {}
+        self.output_options = {}
+        self.global_options = ["-y", "-hide_banner", "-loglevel", "info"]  # Default global options
+        self.logger = logger if logger is not None else get_logger(__name__)
+
+    def input(self, input_file):
+        """Set the input file."""
+        self.input_file = input_file
+        return self  # Fluent API
+
+    def output(self, output_file):
+        """Set the output file (optional)."""
+        self.output_file = output_file
+        return self  # Fluent API
+
+    def metadata(self, metadata_dict):
+        """Set metadata options."""
+        if metadata_dict:
+            self.metadata_options.update(metadata_dict)
+        return self  # Fluent API
+
+    def output_args(self, output_dict):
+        """Set output encoding options."""
+        self.output_options.update(output_dict)
+        return self  # Fluent API
+
+    def global_args(self, global_list):
+        """Set global FFmpeg options."""
+        self.global_options = global_list
+        return self  # Fluent API
+
+    def compile(self):
+        """Constructs the FFmpeg command."""
+        if not self.input_file:
+            raise ValueError("Input file must be set.")
+
+        # Default output file if not set
+        if not self.output_file:
+            self.output_file = self.input_file
+
+        # important the order
+        command = [self.ffmpeg_path] + ["-i", self.input_file] + self.global_options 
+
+        # Add metadata
+        for key, value in self.metadata_options.items():
+            command.extend(["-metadata", f"{key}={value}"])
+
+        # Add output options
+        for key, value in self.output_options.items():
+            command.extend([f"-{key}", value])
+
+        # Set output file
+        command.append(self.output_file)
+
+        return command
+
+    def run(self, capture_stdout=False, capture_stderr=False):
+        """Run the FFmpeg command."""
+        command = self.compile()
+        
+        # Set subprocess options for capturing output
+        stdout_option = subprocess.PIPE if capture_stdout else None
+        stderr_option = subprocess.PIPE if capture_stderr else None
+                
+        try:
+            self.logger.debug("Running FFmpeg command:", " ".join(command))
+            process = subprocess.run(command, check=True, stdout=stdout_option, stderr=stderr_option, text=True)
+            self.logger.success(f"Executed: {self.output_file}")
+            return process.stdout
+        except subprocess.CalledProcessError as e:
+            logger.error(f"FFmpeg failed with error: {e.stderr}")
+            raise
+
+    def probe(self, output_file, cmd:str=None):
+        """Probe the output file to check media info."""
+        if not output_file:
+            raise ValueError("Output file must be set before probing.")
+
+        try:
+            info = ffmpeg.probe(output_file, cmd=cmd)
+            return info
+        except ffmpeg.Error as e:
+            self.logger.error("Error probing file:", e)
+            raise

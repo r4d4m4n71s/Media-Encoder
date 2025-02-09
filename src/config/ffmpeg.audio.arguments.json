@@ -1,4 +1,4 @@
-[    
+[        
     {
         "Name": "-nostdin",
         "Default": "",
@@ -28,5 +28,10 @@
         "Name": "-map_metadata",
         "Default": "0",
         "Description": "Add metadata to the output file (0 = yes, -1 = no)."
+    },
+    {
+        "Name": "-vn",
+        "Default": "",
+        "Description": "Disables video processing, ensuring no video codecs are used."
     }
 ]

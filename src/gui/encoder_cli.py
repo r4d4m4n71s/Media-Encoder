@@ -4,8 +4,7 @@ import os
 import sys
 from typing import Tuple
 from tabulate import tabulate
-from config import *
-from models import ProfileConstants
+from config import FFMPEG_PATH, FFMPEG_PROFILES_PATH
 from encoder import Encoder
 
 # Add the src directory to the Python path
@@ -74,7 +73,7 @@ def main():
     try:
                 
         print(f"Processing {args.input} -> {args.output}")        
-        Encoder(args.profile).reencode(args.input, args.output)        
+        Encoder(args.profile).encode(args.input, args.output)        
         print("Encoding complete!")
         
     except Exception as e:
