@@ -52,5 +52,8 @@ jobs:
         pip install -r requirements-dev.txt
         
     - name: Run tests
+      env:
+        FFMPEG_PATH: /usr/bin/ffmpeg
+        FFPROBE_PATH: /usr/bin/ffprobe
       run: |
         pytest tests/ -v --cov=tests --cov-report=term-missing:skip-covered
