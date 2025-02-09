@@ -16,8 +16,8 @@ class TestReencoderRegression(unittest.TestCase):
         self.output_dir = os.path.join(os.path.dirname(__file__), "output")
         self.dataManater = ProfileDataManager().load_profiles(FFMPEG_PROFILES_PATH)
         
-        self.logger = logger.bind(name="test_logger")
-        self.logger.add(os.path.join(self.output_dir ,"test.log"), rotation="5 MB", level="DEBUG", format="{time} {level} {message}", enqueue=True, mode='w')
+        self.logger = logger.bind(name="test_encoder")
+        self.logger.add(os.path.join(self.output_dir ,"encoder.log"), rotation="5 MB", level="DEBUG", format="{time} {level} {message}", enqueue=True, mode='w')
                  
         os.makedirs(self.output_dir, exist_ok=True)
                 
