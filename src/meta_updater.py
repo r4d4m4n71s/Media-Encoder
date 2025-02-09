@@ -18,7 +18,7 @@ class MetadataError(Exception):
     """Custom exception for metadata related errors."""
     pass
 
-class AudioMetadataUpdater:
+class AudioMetaUpdater:
     """Class for updating metadata in various audio file formats."""
 
     # Supported file formats and their corresponding classes
@@ -56,12 +56,11 @@ class AudioMetadataUpdater:
             raise FileNotFoundError(f"Tags mapping file not found: {tags_path}")
 
         self.file_path = file_path
-        self.audio = None
-
         self.tags_path = tags_path
         
         try:
             self.mp3_tags, self.mp4_tags = self._load_tag_mappings(tags_path)
+            self.audio = self._load_audio_file()
         except (json.JSONDecodeError, KeyError) as e:
             raise MetadataError(f"Failed to load tag mappings: {str(e)}")
 
@@ -204,12 +203,8 @@ class AudioMetadataUpdater:
         if not lang.islower():
             lang = lang.lower()
 
-        try:
-            for key, value in metadata_list:
-                self.update_or_add_metadata(key, value, encoding, lang)
-            #self.audio.save()
-        except Exception as e:
-            raise MetadataError(f"Failed to update metadata list: {str(e)}")
+        for key, value in metadata_list:
+            self.update_or_add_metadata(key, value, encoding, lang)
 
     def update_or_add_metadata(self, key: str, value: Any, encoding: int = 3, lang: str = 'eng') -> None:
         """
@@ -239,10 +234,26 @@ class AudioMetadataUpdater:
         if not isinstance(lang, str) or not lang.isalpha() or len(lang) != 3:
             raise ValueError("Language code must be a 3-letter ISO 639-2 code")
 
+        # Validate value type
+        if not isinstance(value, (str, list, bool, int, float)):
+            raise ValueError(f"Invalid value type: {type(value)}. Must be string, list, boolean, integer, or float.")
+
         # Handle string values
         if isinstance(value, str):
             value = value.strip()
             if not value:
+                # Load audio file if not already loaded
+                if self.audio is None:
+                    self.audio = self._load_audio_file()
+                # Remove the tag if it exists
+                try:
+                    if hasattr(self.audio, 'tags') and self.audio.tags and key in self.audio.tags:
+                        del self.audio.tags[key]
+                    elif hasattr(self.audio, 'keys') and key in self.audio:
+                        del self.audio[key]
+                    self.audio.save()
+                except Exception:
+                    pass
                 return
 
         # Normalize key to lowercase
@@ -264,7 +275,7 @@ class AudioMetadataUpdater:
             elif ext in ['.mp4', '.m4a']:
                 self._update_mp4_metadata(key, value)
             elif ext == '.wav':
-                self._update_wave_metadata(key, value)
+                self._update_wave_metadata(key, value, encoding, lang)
             elif ext == '.aac':
                 self._update_aac_metadata(key, value)
             else:
@@ -472,26 +483,49 @@ class AudioMetadataUpdater:
                 if key in self._mp4_tag_cache:
                     mutagen_key = self._mp4_tag_cache[key]['mutagen_key']
                     try:
-                        self.audio[mutagen_key] = value
+                        # Handle special case for ISRC and other iTunes-specific tags
+                        if mutagen_key.startswith('----:'):
+                            if isinstance(value, str):
+                                value = value.encode('utf-8')
+                            self.audio[mutagen_key] = [value]
+                        # Handle special case for disc number
+                        elif mutagen_key == 'disk':
+                            if isinstance(value, str):
+                                disc_num = int(value)
+                                total_discs = 0  # Default to 0 if not specified
+                                if '/' in value:
+                                    disc_num, total_discs = map(int, value.split('/'))
+                            elif isinstance(value, (int, float)):
+                                disc_num = int(value)
+                                total_discs = 0
+                            else:
+                                raise ValueError(f"Invalid disc number format: {value}")
+                            self.audio[mutagen_key] = [(disc_num, total_discs)]
+                        else:
+                            self.audio[mutagen_key] = value
                     except Exception as e:
                         raise MetadataError(f"Failed to set MP4 tag '{key}' with key '{mutagen_key}': {str(e)}")
                 else:
                     # Dynamically add a new tag for unsupported keys
                     try:
-                        self.audio[f'----:com.apple.iTunes:{key}'] = value.encode('utf-8') if isinstance(value, str) else value
+                        if isinstance(value, str):
+                            value = [value.encode('utf-8')]
+                        self.audio[f'----:com.apple.iTunes:{key}'] = value
                     except Exception as e:
                         raise MetadataError(f"Failed to add custom MP4 tag '{key}': {str(e)}")
 
         except Exception as e:
             raise MetadataError(f"Failed to update MP4 metadata '{key}': {str(e)}")
 
-    def _update_wave_metadata(self, key: str, value: Any, cover_path: str = None) -> None:
+    def _update_wave_metadata(self, key: str, value: Any, encoding: int = 3, lang: str = 'eng', cover_path: str = None) -> None:
         """
         Update or add metadata for WAV files.
 
         Args:
             key: The metadata key
             value: The value to set for the key
+            encoding: The encoding to use for the metadata (1-4)
+            lang: The language code to use for the metadata (ISO 639-2)
             cover_path: Optional path to cover art image file
 
         Raises:
@@ -500,36 +534,25 @@ class AudioMetadataUpdater:
             ValueError: If value type is invalid
         """
         try:
+            # Ensure tags exist
+            if not hasattr(self.audio, 'tags') or self.audio.tags is None:
+                self.audio.add_tags()
+
+            # WAV files don't support cover art
             if key == 'cover_art':
-                picture = Picture()
-                image_path = cover_path or value
-                if not os.path.exists(image_path):
-                    raise FileNotFoundError(f"Cover art file not found: {image_path}")
-
-                try:
-                    with open(image_path, 'rb') as f:
-                        picture.data = f.read()
-
-                    # Determine MIME type from file extension
-                    ext = os.path.splitext(image_path)[1].lower()
-                    if ext in ['.jpg', '.jpeg']:
-                        picture.mime = self.MIME_TYPES['jpeg']
-                    elif ext == '.png':
-                        picture.mime = self.MIME_TYPES['png']
-                    else:
-                        raise MetadataError(f"Unsupported image format: {ext}")
-
-                    self.audio.add_picture(picture)
-                except IOError as e:
-                    raise MetadataError(f"Failed to read cover art file: {str(e)}")
+                return
             else:
-                # Validate and convert value
+                # Convert value to string if needed
                 if isinstance(value, (bool, int, float)):
                     value = str(value)
                 elif not isinstance(value, str):
                     raise ValueError(f"Invalid value type for WAV metadata: {type(value)}")
 
-                self.audio[key] = value
+                # Use ID3 frames for WAV metadata
+                if key in self._mp3_tag_cache:
+                    self._add_standard_mp3_tag(key, value, encoding, lang)
+                else:
+                    self._add_custom_mp3_tag(key, value, encoding, lang)
 
         except Exception as e:
             raise MetadataError(f"Failed to update WAV metadata '{key}': {str(e)}")
@@ -596,6 +619,9 @@ class AudioMetadataUpdater:
         :raises MetadataError: If JSON is invalid
         :raises ValueError: If metadata structure is invalid
         """
+        if not os.path.exists(json_file):
+            raise FileNotFoundError("Metadata JSON file not found")
+            
         try:
             with open(json_file, 'r') as f:
                 metadata = json.load(f)
@@ -626,7 +652,7 @@ class AudioMetadataUpdater:
             ignore_string_case=True, 
             verbose_level=2,
             cutoff_intersection_for_pairs=0.8,
-            exclude_paths=["root['APIC:Cover']"]
+            exclude_regex_paths=[r".*APIC.*"]            
         )
         return diff.pretty()
 
@@ -636,4 +662,14 @@ class AudioMetadataUpdater:
 
         :return: A dictionary containing the current tags.
         """
-        return {tag: self.audio[tag] for tag in self.audio.keys()}
+        if self.audio is None:
+            return {}
+        
+        try:
+            if hasattr(self.audio, 'tags') and self.audio.tags:
+                return dict(self.audio.tags)
+            elif hasattr(self.audio, 'keys'):
+                return {tag: self.audio[tag] for tag in self.audio.keys()}
+            return {}
+        except Exception:
+            return {}

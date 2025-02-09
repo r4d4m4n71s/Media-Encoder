@@ -3,9 +3,9 @@ import os
 from unittest.mock import patch, mock_open, MagicMock
 from mutagen.id3 import ID3
 from config import logger, MUTAGEN_AUDIO_TAGS
-from meta_updater import AudioMetadataUpdater, AudioFormatError, MetadataError
+from meta_updater import AudioMetaUpdater, AudioFormatError, MetadataError
 
-class TestAudioMetadataUpdater(unittest.TestCase):
+class TestAudioMetaUpdater(unittest.TestCase):
 
     def setUp(self):
         self.resources_dir = os.path.join(os.path.dirname(__file__), 'resources/audio')
@@ -41,42 +41,42 @@ class TestAudioMetadataUpdater(unittest.TestCase):
 
         # Test FLAC
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
-        updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+        updater = AudioMetaUpdater(test_flac_path, self.tags_path)
         audio = updater._load_audio_file()
-        mock_flac.assert_called_once_with(test_flac_path)
+        mock_flac.assert_called_with(test_flac_path)
         self.assertEqual(audio, mock_flac_instance)
 
         # Test MP3
         test_mp3_path = os.path.join(self.resources_dir, 'test.mp3')
-        updater = AudioMetadataUpdater(test_mp3_path, self.tags_path)
+        updater = AudioMetaUpdater(test_mp3_path, self.tags_path)
         audio = updater._load_audio_file()
-        mock_mp3.assert_called_once_with(test_mp3_path, ID3=ID3)
+        mock_mp3.assert_called_with(test_mp3_path, ID3=ID3)
         self.assertEqual(audio, mock_mp3_instance)
 
         # Test M4A
         test_m4a_path = os.path.join(self.resources_dir, 'test.m4a')
-        updater = AudioMetadataUpdater(test_m4a_path, self.tags_path)
+        updater = AudioMetaUpdater(test_m4a_path, self.tags_path)
         audio = updater._load_audio_file()
-        mock_mp4.assert_called_once_with(test_m4a_path)
+        mock_mp4.assert_called_with(test_m4a_path)
         self.assertEqual(audio, mock_mp4_instance)
 
         # Test WAV
         test_wav_path = os.path.join(self.resources_dir, 'test.wav')
-        updater = AudioMetadataUpdater(test_wav_path, self.tags_path)
+        updater = AudioMetaUpdater(test_wav_path, self.tags_path)
         audio = updater._load_audio_file()
-        mock_wave.assert_called_once_with(test_wav_path)
+        mock_wave.assert_called_with(test_wav_path)
         self.assertEqual(audio, mock_wave_instance)
 
         # Test unsupported format
         test_xyz_path = os.path.join(self.resources_dir, 'test.xyz')
-        updater = AudioMetadataUpdater(test_xyz_path, self.tags_path)
         with self.assertRaises(AudioFormatError) as context:
+            updater = AudioMetaUpdater(test_xyz_path, self.tags_path)
             updater._load_audio_file()
         self.assertIn("Unsupported audio format", str(context.exception))
 
     def test_load_tag_mappings(self):
         """Test loading tag mappings from the actual config file."""
-        updater = AudioMetadataUpdater(os.path.join(self.resources_dir, 'test.mp3'), self.tags_path)
+        updater = AudioMetaUpdater(os.path.join(self.resources_dir, 'test.mp3'), self.tags_path)
         mp3_tags, mp4_tags = updater._load_tag_mappings(self.tags_path)
         
         # Test MP3 tags
@@ -106,7 +106,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         mock_audio.tags = None
         
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
-        updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+        updater = AudioMetaUpdater(test_flac_path, self.tags_path)
         
         # Test with valid metadata
         updater.update_metadata_list([('title', 'Test Title')])
@@ -132,7 +132,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         mock_audio.tags = None
         
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
-        updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+        updater = AudioMetaUpdater(test_flac_path, self.tags_path)
         
         # Test basic metadata update
         updater.update_or_add_metadata('title', 'Test Title')
@@ -152,7 +152,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
     def test_invalid_metadata_key(self):
         """Test handling of invalid metadata keys."""
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
-        updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+        updater = AudioMetaUpdater(test_flac_path, self.tags_path)
         with self.assertRaises(ValueError) as context:
             updater.update_or_add_metadata('', 'Test Value')
         self.assertIn("must be a non-empty string", str(context.exception))
@@ -168,7 +168,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         mock_audio = MagicMock()
         mock_flac.return_value = mock_audio
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
-        updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+        updater = AudioMetaUpdater(test_flac_path, self.tags_path)
 
         # Test boolean conversion
         updater.update_or_add_metadata('test_bool', True)
@@ -195,7 +195,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         mock_flac.return_value = mock_audio
         
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
-        updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+        updater = AudioMetaUpdater(test_flac_path, self.tags_path)
         
         # Test missing cover art file
         mock_exists.return_value = False
@@ -259,7 +259,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
                 mock_file.side_effect = [mock_file.return_value, mock_metadata_file.return_value]
                 
                 with patch('builtins.open', mock_file):
-                    updater = AudioMetadataUpdater(test_flac_path, self.tags_path)
+                    updater = AudioMetaUpdater(test_flac_path, self.tags_path)
                     if test_case['error_type']:
                         with self.assertRaises(test_case['error_type']) as context:
                             updater.update_metadata_from_json(os.path.join(self.resources_dir, 'metadata.json'))
@@ -271,7 +271,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
     def test_invalid_encoding_parameter(self):
         """Test validation of encoding parameter."""
         test_mp3_path = os.path.join(self.resources_dir, 'test.mp3')
-        updater = AudioMetadataUpdater(test_mp3_path, self.tags_path)
+        updater = AudioMetaUpdater(test_mp3_path, self.tags_path)
         
         with self.assertRaises(ValueError) as context:
             updater.update_metadata_list([('title', 'Test')], encoding=0)
@@ -284,7 +284,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
     def test_invalid_language_parameter(self):
         """Test validation of language parameter."""
         test_mp3_path = os.path.join(self.resources_dir, 'test.mp3')
-        updater = AudioMetadataUpdater(test_mp3_path, self.tags_path)
+        updater = AudioMetaUpdater(test_mp3_path, self.tags_path)
         
         with self.assertRaises(ValueError) as context:
             updater.update_metadata_list([('title', 'Test')], lang='en')
@@ -304,7 +304,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         mock_mp3.return_value = mock_audio
         
         test_mp3_path = os.path.join(self.resources_dir, 'test.mp3')
-        updater = AudioMetadataUpdater(test_mp3_path, self.tags_path)
+        updater = AudioMetaUpdater(test_mp3_path, self.tags_path)
         
         # Mock the tag mappings with proper module.class format
         updater._mp3_tag_cache = {'lyrics': {'mutagen_frame': 'mutagen.id3.USLT'}}
@@ -325,7 +325,7 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         mock_mp4.return_value = mock_audio
         
         test_mp4_path = os.path.join(self.resources_dir, 'test.m4a')
-        updater = AudioMetadataUpdater(test_mp4_path, self.tags_path)
+        updater = AudioMetaUpdater(test_mp4_path, self.tags_path)
         
         # Test standard MP4 tag
         updater.update_or_add_metadata('title', 'Test Title')
@@ -340,13 +340,13 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         """Test file not found handling."""
         test_flac_path = os.path.join(self.resources_dir, 'nonexistent.flac')
         with self.assertRaises(FileNotFoundError) as context:
-            AudioMetadataUpdater(test_flac_path, self.tags_path)
+            AudioMetaUpdater(test_flac_path, self.tags_path)
         self.assertIn("Audio file not found", str(context.exception))
 
         mock_exists.side_effect = [True, False]
         test_flac_path = os.path.join(self.resources_dir, 'test.flac')
         with self.assertRaises(FileNotFoundError) as context:
-            AudioMetadataUpdater(test_flac_path, os.path.join(self.resources_dir, 'nonexistent.json'))
+            AudioMetaUpdater(test_flac_path, os.path.join(self.resources_dir, 'nonexistent.json'))
         self.assertIn("Tags mapping file not found", str(context.exception))
 
     def test_unsupported_audio_format(self):
@@ -354,6 +354,6 @@ class TestAudioMetadataUpdater(unittest.TestCase):
         test_path = os.path.join(self.resources_dir, 'test.xyz')
         with patch('meta_updater.os.path.exists', return_value=True):
             with self.assertRaises(AudioFormatError) as context:
-                updater = AudioMetadataUpdater(test_path, self.tags_path)
+                updater = AudioMetaUpdater(test_path, self.tags_path)
                 updater._load_audio_file()
             self.assertIn("Unsupported audio format", str(context.exception))
