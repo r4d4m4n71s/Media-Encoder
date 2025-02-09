@@ -104,9 +104,7 @@ class TestReencoderRegression(unittest.TestCase):
         """Test converting between different audio formats with tagged files"""
         source_formats = ['flac', 'm4a', 'mp3']
         target_formats = ['wav', 'flac', 'mp3', 'm4a']
-        #source_formats = ['m4a']
-        #target_formats = ['wav']
-
+        
         for src_fmt in source_formats:
             for tgt_fmt in target_formats:
                 with self.subTest(source=src_fmt, target=tgt_fmt):

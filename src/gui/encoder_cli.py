@@ -6,13 +6,8 @@ from typing import Tuple
 from tabulate import tabulate
 from config import FFMPEG_PATH, FFMPEG_PROFILES_PATH
 from encoder import Encoder
-
-# Add the src directory to the Python path
-# src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# sys.path.insert(0, src_dir)
-
-from data_manager import ProfileDataManager  # noqa: E402
-from models import Profile # noqa: E402
+from data_manager import ProfileDataManager
+from models import Profile
 
 def check_ffmpeg() -> Tuple[bool, str]:
     """Check if ffmpeg is installed in the dist folder.
