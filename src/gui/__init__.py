@@ -1,5 +1,5 @@
 from tabulate import tabulate
-from models import Profile
+from media_encoder.models import Profile
 
 def create_audio_profiles_table(profiles:list[Profile]) -> str:
     headers = ["Profile", "Codec", "Extension", "FFmpeg Setup", "Size Factor", "CPU Factor", "Description"]

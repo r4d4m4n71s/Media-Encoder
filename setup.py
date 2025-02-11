@@ -10,7 +10,7 @@ def read_requirements(filename):
         return [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
 def install_ffmpeg():
-    subprocess.check_call(['install_ffmpeg.bat'], shell=True)
+    subprocess.check_call(['ffmpeg_download.bat'], shell=True)
 
 def verify_installation():
     # Check if FFmpeg executables exist
@@ -82,7 +82,8 @@ setup(
     author='r4d4m4n71s',
     url='https://github.com/yourusername/media-encoder',
     package_dir={"": "src"},
-    packages=find_namespace_packages(where="src", include=["*"]),
+    py_modules=["models", "config", "encoder", "data_manager", "meta_updater", "utils"],
+    packages=["gui"],
     package_data={
         "": ["dist/*.exe"],  # Include FFmpeg executables
         "config": ["*.json"],  # Include config files

@@ -104,9 +104,9 @@ def test_show_profiles(mock_create_audio_profiles_table, mock_profile_data_manag
 @patch('gui.encoder_cli.Encoder')
 def test_encode(mock_encoder, capsys):
     mock_encoder_instance = mock_encoder.return_value
-    encode("input.mp3", "output.mp3", "profileA", {"key": "value"})
+    encode("input.mp3", "output.mp3", "profileA", 'key1=value1')
     mock_encoder.assert_called_once_with("profileA")
-    mock_encoder_instance.encode.assert_called_once_with("input.mp3", "output.mp3", metadata_tags={"key": "value"})
+    mock_encoder_instance.encode.assert_called_once_with("input.mp3", "output.mp3", metadata_tags={"key1": "value1"})
     captured = capsys.readouterr()
     assert "Encoding complete!" in captured.out
 
@@ -153,7 +153,7 @@ def test_main_input_no_operation(capsys):
     assert pytest_wrapped_e.type is SystemExit
     assert pytest_wrapped_e.value.code == 1
     captured = capsys.readouterr()
-    assert "Error: Operation" in captured.err
+    assert "Error: Requires Operation (-o)." in captured.err
 
 def test_main_encode_missing_profile(capsys):
     with pytest.raises(SystemExit) as pytest_wrapped_e:
@@ -167,32 +167,32 @@ def test_main_encode_missing_profile(capsys):
 
 @patch('gui.encoder_cli.encode')
 def test_main_encode_success(mock_encode, capsys):
-    with patch('sys.argv', ['program.py', 'input.mp3', '-o', 'encode', '-p', 'profileA']):
+    with patch('sys.argv', ['program.py', 'input.mp3', 'output.mp3', '-o', 'encode', '-p', 'profileA']):
         main()
-    mock_encode.assert_called_once_with('input.mp3', 'output.encoded', 'profileA')
+    mock_encode.assert_called_once_with('input.mp3', 'output.mp3', 'profileA', None)
     captured = capsys.readouterr()
 
 @patch('gui.encoder_cli.copy')
 def test_main_copy_success(mock_copy, capsys):
-    with patch('sys.argv', ['program.py', 'input.mp3', '-o', 'copy', '-m', 'key1=value1']):
+    with patch('sys.argv', ['program.py', 'input.mp3', 'output.mp3', '-o', 'copy', '-m', 'key1=value1']):
         main()
-    mock_copy.assert_called_once_with('input.mp3', 'output.copied', 'key1=value1')
+    mock_copy.assert_called_once_with('input.mp3', 'output.mp3', 'key1=value1')
     captured = capsys.readouterr()
 
-def test_main_show_profiles(capsys):
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        with patch('sys.argv', ['program.py', '-p', 'dummy_profile']):
-            with patch('gui.encoder_cli.show_profiles') as mock_show_profiles:
-                main()
+@patch('sys.exit')
+def test_main_show_profiles(mock_exit, capsys):
+    with patch('sys.argv', ['program.py', '-p']):
+        with patch('gui.encoder_cli.show_profiles') as mock_show_profiles:
+            main()
             mock_show_profiles.assert_called_once()
-    assert pytest_wrapped_e.type is SystemExit
-    assert pytest_wrapped_e.value.code == 0
+            captured = capsys.readouterr()
+            assert "Choose profile below." in captured.out
 
 def test_main_input_output(capsys):
-    with pytest.raises(SystemExit) as pytest_wrapped_e:
-        with patch('sys.argv', ['program.py', 'input.mp3', 'output.mp3']):
+    with patch('sys.argv', ['program.py', 'input.mp3', 'output.mp3']):
+        with pytest.raises(SystemExit) as pytest_wrapped_e:
             main()
-    assert pytest_wrapped_e.type is SystemExit
-    assert pytest_wrapped_e.value.code == 1
-    captured = capsys.readouterr()
-    assert "Error: Provide.." in captured.err
+        assert pytest_wrapped_e.type is SystemExit
+        assert pytest_wrapped_e.value.code == 1
+        captured = capsys.readouterr()
+        assert "Error: Requires Operation (-o)." in captured.err

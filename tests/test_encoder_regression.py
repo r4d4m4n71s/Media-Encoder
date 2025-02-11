@@ -67,6 +67,47 @@ class TestReencoderRegression(unittest.TestCase):
                 if os.path.isfile(file_path):
                     os.remove(file_path)
     
+    def test_remove_from_tagged_files(self):
+        """Test converting between different audio formats with tagged files"""
+        source_formats = ['flac', 'm4a', 'mp3']
+
+        expected_remove_metadata = {
+            "album": None,
+            "Lyrics": ""
+        }  
+
+        for src_fmt in source_formats:            
+            with self.subTest(source=src_fmt, target=src_fmt):
+                
+                self.logger.info(f"Encoding from {src_fmt} ...")            
+                self.logger.info(f"Encoding to {src_fmt} ...")
+                profile = self.dataManater.get_profiles_by_extension(f".{src_fmt}")[0]
+                self.logger.info(f"Using profile: {profile.Name} ...")
+                
+                input_file_path = self.source_files[src_fmt]['tagged']
+                output_file_path = os.path.join(self.output_dir, f"output.{src_fmt}")
+            
+                # Initialize reencoder with FLAC codec for testing
+                encoder = Encoder(profile.Name)                                               
+                result = encoder.copy(
+                    input_file_path=input_file_path,
+                    output_path=output_file_path,
+                    metadata_tags=expected_remove_metadata
+                )
+
+                self.assertTrue(os.path.isfile(result))
+                self.assertTrue(result.endswith(f".{src_fmt}"))
+                
+                metadata = encoder.get_metadata(result)
+                tags = metadata.get('format', {}).get('tags', {})
+                
+                # Compare each expected tag with the actual metadata
+                for key, value in expected_remove_metadata.items():
+                    if key == "Lyrics":
+                        self.assertFalse(tags.get(key.lower()))    
+                        continue
+                    self.assertEqual(tags.get(key.lower()), str(value))
+
     def test_copy_from_tagged_files(self):
         """Test converting between different audio formats with tagged files"""
         source_formats = ['flac', 'm4a', 'mp3']
