@@ -1,7 +1,10 @@
 import os
 import subprocess
 import sys
-from setuptools import setup, find_namespace_packages, Command
+import os
+import subprocess
+import sys
+from setuptools import setup, find_packages, Command
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
@@ -69,6 +72,10 @@ class ReleaseCommand(Command):
         
         subprocess.check_call(twine_cmd)
 
+def read_requirements(filename):
+    with open(filename) as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+
 # Read requirements
 install_requires = read_requirements('src/requirements.txt')
 dev_requires = read_requirements('requirements-dev.txt')
@@ -81,9 +88,8 @@ setup(
     long_description_content_type='text/markdown',
     author='r4d4m4n71s',
     url='https://github.com/yourusername/media-encoder',
-    package_dir={"": "src"},
-    py_modules=["models", "config", "encoder", "data_manager", "meta_updater", "utils"],
-    packages=["gui"],
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
     package_data={
         "": ["dist/*.exe"],  # Include FFmpeg executables
         "config": ["*.json"],  # Include config files
@@ -92,11 +98,6 @@ setup(
     install_requires=install_requires,
     extras_require={
         'dev': dev_requires,
-    },
-    cmdclass={
-        'install': InstallCommand,
-        'develop': DevelopCommand,
-        'release': ReleaseCommand,
     },
     python_requires='>=3.8',
     classifiers=[
@@ -110,7 +111,12 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'media-encoder=gui.encoder_cli:main',
+            'media-encoder=media_encoder.gui.encoder_cli:main',
         ],
+    },
+    cmdclass={
+        'install': InstallCommand,
+        'develop': DevelopCommand,
+        'release': ReleaseCommand,
     },
 )

@@ -48,9 +48,9 @@
             "args": [
                 //"${workspaceRoot}/tests/output/test.flac",
                 //"${workspaceRoot}/tests/output/output.flac",
-                //"song.mp3",
-                //"-o",
-                //"copy",
+                "song.mp3",
+                "-o",
+                "encode",
                 //"-m",
                 //"'key='",
                 "-p",
