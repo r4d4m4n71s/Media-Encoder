@@ -1,5 +1,5 @@
 import os
-from data_manager import ProfilesDataManager
+from data_manager import ProfileDataManager
 from tabulate import tabulate
 from models import Profile
 
@@ -12,7 +12,7 @@ def update_readme():
     template_path = os.path.join(current_dir, "config", "readme.template.md")
     readme_path = os.path.join(project_root, "README.md")    
     profiles_path = os.path.join(current_dir, "config", "ffmpeg.audio.profiles.json")
-    profiles_manager = ProfilesDataManager(profiles_path)
+    profiles_manager = ProfileDataManager(profiles_path)
     profiles = profiles_manager.get_all_profiles()
     
     # Generate profiles table
@@ -36,7 +36,7 @@ def create_audio_profiles_table(data: list[Profile]) -> str:
     rows = []
     for profile in data:
         rows.append([
-            profile.Profile,
+            profile.Name,
             profile.Codec,
             profile.Extension,
             profile.FFmpegSetup,

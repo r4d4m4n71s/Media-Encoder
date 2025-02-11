@@ -1,23 +1,3 @@
-@echo off
-rem Define the virtual environment directory
-set VENV_DIR=.venv
-
-rem Check if virtual environment exists
-if not exist "%VENV_DIR%" (
-    echo Virtual environment not found. Creating one...
-    python -m venv %VENV_DIR%
-)
-
-rem Activate the virtual environment
-call %VENV_DIR%\Scripts\activate.bat
-
-echo Installing dependencies...
-%VENV_DIR%\Scripts\python.exe -m pip install --upgrade pip
-%VENV_DIR%\Scripts\python.exe -m pip install -r requirements-dev.txt
-
-echo Creating dist directory...
-if not exist "dist" mkdir dist
-
 if exist "dist\ffmpeg.exe" (
     if exist "dist\ffprobe.exe" (
         if exist "dist\ffplay.exe" (
@@ -26,6 +6,9 @@ if exist "dist\ffmpeg.exe" (
         )
     )
 )
+
+echo Creating dist directory...
+if not exist "dist" mkdir dist
 
 echo Downloading ffmpeg...
 powershell -Command "& {$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip' -OutFile 'dist\ffmpeg.zip'}"

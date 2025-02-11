@@ -4,10 +4,11 @@ A media encoding tool supporting various audio formats and streaming service pro
 
 ## Description
 
-Media Encoder is a Python-based tool designed to handle media encoding tasks, with a focus on audio format conversion and streaming service profile support. It provides a flexible and user-friendly interface for managing your media encoding needs.
+Media Encoder is a Python-based tool designed to media encoding tasks like adding metadata and encoding.
 
 ## Features
 
+- Copy metadata to file from a json dic.
 - Audio format conversion with multiple codec support (MP3, FLAC, ALAC, WAV, Opus)
 - Streaming service profile support for major platforms (Spotify, Apple Music, Tidal, etc.)
 - JSON-based configuration for encoding profiles
@@ -16,7 +17,7 @@ Media Encoder is a Python-based tool designed to handle media encoding tasks, wi
 - Detailed profile information including size and CPU usage factors
 - Cross-platform support
 
-## Profiles
+## Encoding Profiles
 
 | Profile                                 | Codec      | Extension   | FFmpeg Setup                                                 |   Size Factor |   CPU Factor | Description                                    |
 |-----------------------------------------|------------|-------------|--------------------------------------------------------------|---------------|--------------|------------------------------------------------|
@@ -36,24 +37,51 @@ Media Encoder is a Python-based tool designed to handle media encoding tasks, wi
 | Tidal Master (MQA)                      | FLAC (MQA) | .flac       | acodec=flac, compression_level=12, ar=96000, sample_fmt=s32  |           1.8 |          2.3 | High-resolution MQA audio (requires unfolding) |
 | FLAC Uncompressed 24bit 192kHz          | FLAC       | .flac       | acodec=flac, compression_level=0, ar=192000, sample_fmt=s32  |           3   |          3.5 | Uncompressed, ultra-high quality FLAC          |
 
-## Usage
+
+## Installation Guide
+
+## End User Installation
+
+For regular users who want to use the Media Encoder:
+
+```bash
+pip install media-encoder 
+```
+
+This will:
+- Install required dependencies
+- Verify the installation is complete
+
+## Developer Installation
+
+For developers who want to contribute to the Media Encoder:
+
+```bash
+# Install the package in development mode with extra dev dependencies and test
+pip install media-encoder -e
+```
+
+This will:
+- Install dev required dependencies including development tools
+- Install the package in editable mode for development
+- Verify the installation is complete
 
 ### Command Line Interface
 After installation, you can use the tool from the command line:
 
+
 Basic usage:
 ```bash
-media-encoder input.mp3 output.mp3 --profile "MP3 Standard 320kbps"
-```
+# For encoding ... overwriting same file
+media-encoder input.flac "Apple Music (Lossless)"
 
-List all available profiles with detailed information:
-```bash
+# For encoding ... setting out ouput file
+media-encoder input.flac output.mp3 "MP3 Standard 320kbps"
+
+# For metadata adding ...
+
+# Encoding profiles information ...
 media-encoder --list-profiles
-```
-
-Using a specific profile:
-```bash
-media-encoder input.flac output.m4a --profile "Apple Music (Lossless)"
 ```
 
 ## Requirements
@@ -61,67 +89,14 @@ media-encoder input.flac output.m4a --profile "Apple Music (Lossless)"
 ### Core Dependencies
 - Python 3.8 or higher
 - loguru==0.7.3 - For logging functionality
+- ffmpeg for metadata copying and media processing
 
-### Development Dependencies
-- pytest==7.4.3 - Testing framework
-- pytest-cov==4.1.0 - Test coverage reporting
-- build==1.0.3 - Package building
-- wheel==0.41.2 - Package distribution
-- setuptools>=65.5.1 - Package setup
-- twine==4.0.2 - Package publishing
-- black==23.11.0 - Code formatting
-- ruff==0.1.6 - Fast Python linter
-- mypy==1.7.0 - Static type checking
-- pyinstaller==6.11.1 - Executable creation
-- tabulate==0.9.0 - Table formatting
-
-## Installation
-
-### For Users
-To install Media Encoder for regular use:
-
-```bash
-build.bat user
-```
-
-This will install:
-- Core dependencies only
-- Regular package installation
-
-### For Developers
-To set up the development environment:
-
-```bash
-build.bat local
-```
-
-This will install:
-- Core dependencies
-- Development tools (testing, building, linting)
-- Package in editable mode
-
-### Standalone Executable
-To build the standalone encoder executable:
-
-```bash
-build.bat encoder
-```
-
-This creates `encoder.exe` in the `dist/encoder` directory. The executable can be used without Python installation:
-
-```bash
-encoder.exe input.mp3 output.mp3 --profile "MP3 Standard 320kbps"
-encoder.exe --list-profiles
-```
-
-## Build Commands
-
-- `build.bat user` - Install for regular users
-- `build.bat local` - Set up development environment
-- `build.bat release` - Create distribution packages
-- `build.bat deploy` - Deploy to PyPI
-- `build.bat encoder` - Build standalone executable
-- `build.bat help` - Show help message
+### Dependencies
+- tabulate==0.9.0 - for presentation
+- loguru==0.7.3 - for logging
+- ffmpeg-python==0.2.0 - for media processing
+- mutagen==1.47.0 - for metadata updating
+- deepdiff==8.2.0 - for media comparison
 
 ## License
 

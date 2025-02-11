@@ -1,20 +1,19 @@
 import os
 import sys
-src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, src_dir)
+
 from data_manager import ProfileDataManager  # noqa: E402
 from gui.encoder_cli import create_audio_profiles_table  # noqa: E402
+from config import FFMPEG_PROFILES_PATH
 
 def update_readme():
     # Get the project root directory
-    project_root = os.path.dirname(src_dir)
-    
+    src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.dirname(src_dir)    
     # Load profiles
     template_path = os.path.join(src_dir, "config", "readme.template.md")
     readme_path = os.path.join(project_root, "README.md")    
-    profiles_path = os.path.join(src_dir, "config", "ffmpeg.audio.profiles.json")
-    profiles_manager = ProfileDataManager(profiles_path)
-    profiles = profiles_manager.get_all_profiles()
+    profiles_path = FFMPEG_PROFILES_PATH
+    profiles = ProfileDataManager().load_profiles(profiles_path)
     
     # Generate profiles table
     profiles_table = create_audio_profiles_table(profiles)
