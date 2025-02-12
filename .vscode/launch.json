@@ -41,14 +41,20 @@
             "env": {
                 "PYTHONPATH": "${workspaceRoot}/src",
                 "FFMPEG_PATH": "${workspaceRoot}/dist/ffmpeg.exe",
-                "FFMPEG_PROFILES_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.profiles.json",
-                "FFMPEG_GLOBALARGS_PATH":"${workspaceRoot}/src/config/ffmpeg.audio.arguments.json"
+                "FFMPEG_PROFILES_PATH":"${workspaceRoot}/src/_config/ffmpeg.audio.profiles.json",
+                "FFMPEG_GLOBALARGS_PATH":"${workspaceRoot}/src/_config/ffmpeg.audio.arguments.json"
             },
+            "justMyCode": false,
             "args": [
-                "${workspaceRoot}/tests/output/test.flac",
-                "${workspaceRoot}/tests/output/output.flac",
+                //"${workspaceRoot}/tests/output/test.flac",
+                //"${workspaceRoot}/tests/output/output.flac",
+                "song.mp3",
+                "-o",
+                "encode",
+                //"-m",
+                //"'key='",
+                "-p",
                 "\"FLAC Uncompressed 24bit 192kHz\""
-                //"--profiles"
             ]
         }
     ]

@@ -323,7 +323,6 @@ class FFmpegCommand:
         """Probe the output file to check media info."""
         if not output_file:
             raise ValueError("Output file must be set before probing.")
-
         try:
             info = ffmpeg.probe(output_file, cmd=cmd)
             return info
