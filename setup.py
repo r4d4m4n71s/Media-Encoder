@@ -1,9 +1,6 @@
 import os
 import subprocess
 import sys
-import os
-import subprocess
-import sys
 from setuptools import setup, find_packages, Command
 from setuptools.command.develop import develop
 from setuptools.command.install import install
@@ -19,13 +16,14 @@ def verify_installation():
     # Check if FFmpeg executables exist
     ffmpeg_files = ['ffmpeg.exe', 'ffprobe.exe', 'ffplay.exe']
     for file in ffmpeg_files:
-        if not os.path.exists(os.path.join('dist', file)):
+        if not os.path.exists(os.path.join('build', file)):
             raise RuntimeError(f"FFmpeg installation incomplete: {file} not found")
 
 class InstallCommand(install):
     def run(self):
         install_ffmpeg()
         install.run(self)
+        verify_installation()
 
 class DevelopCommand(develop):
     def run(self):
@@ -54,9 +52,6 @@ class ReleaseCommand(Command):
         for dir_to_clean in ['build', 'dist', '*.egg-info']:
             subprocess.run(['rm', '-rf', dir_to_clean], shell=True)
 
-        # Install FFmpeg
-        install_ffmpeg()
-
         # Build distributions
         subprocess.check_call([sys.executable, 'setup.py', 'sdist', 'bdist_wheel'])
 
@@ -72,12 +67,8 @@ class ReleaseCommand(Command):
         
         subprocess.check_call(twine_cmd)
 
-def read_requirements(filename):
-    with open(filename) as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith('#')]
-
 # Read requirements
-install_requires = read_requirements('src/requirements.txt')
+install_requires = read_requirements('media_encoder/requirements.txt')
 dev_requires = read_requirements('requirements-dev.txt')
 
 setup(
@@ -88,11 +79,15 @@ setup(
     long_description_content_type='text/markdown',
     author='r4d4m4n71s',
     url='https://github.com/yourusername/media-encoder',
-    packages=find_packages(where='src'),
-    package_dir={'': 'src'},
+    
+    packages=find_packages(exclude=['tests']),
+    
     package_data={
-        "": ["dist/*.exe"],  # Include FFmpeg executables
-        "config": ["*.json"],  # Include config files
+        'media_encoder': [
+            '_config/*.json',  # Include config files
+            '_config/readme.template.md'
+        ],
+        'media_encoder.build': ['*.exe'],  # Include FFmpeg executables
     },
     include_package_data=True,
     install_requires=install_requires,
@@ -111,7 +106,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'media-encoder=media_encoder.gui.encoder_cli:main',
+            'media-encoder=media_encoder.encoder_cli:main',
         ],
     },
     cmdclass={

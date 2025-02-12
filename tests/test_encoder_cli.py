@@ -1,6 +1,7 @@
 import pytest
 import os
 import sys
+from models import ProfileConstants
 from unittest.mock import patch, MagicMock
 
 # Mock imports that might be problematic during testing if not available
@@ -37,14 +38,14 @@ except ImportError:
             return "Dummy Profile Data"
 
 try:
-    from gui.__init__ import create_audio_profiles_table  # Replace with your actual module
+    from __init__ import create_audio_profiles_table  # Replace with your actual module
 except ImportError:
     def create_audio_profiles_table(data_manager):  # Dummy table creation
         return "Dummy Table"
 
 
 # Import the script itself AFTER mocking, to prevent early imports of those mocked modules.
-from gui.encoder_cli import check_ffmpeg, show_profiles, encode, copy, kvp_as_dic, main  # Assuming your script is named program.py
+from encoder_cli import check_ffmpeg, show_profiles, encode, copy, kvp_as_dic, main  # Assuming your script is named program.py
 
 # Mock global variables/constants if needed
 TEST_FFMPEG_PATH = "test_ffmpeg_path"
@@ -58,12 +59,12 @@ def capsys(capsys):
 # Fixtures for patching environment variables
 @pytest.fixture
 def mock_ffmpeg_path(monkeypatch):
-    monkeypatch.setattr('gui.encoder_cli.FFMPEG_PATH', TEST_FFMPEG_PATH)
+    monkeypatch.setattr('encoder_cli.FFMPEG_PATH', TEST_FFMPEG_PATH)
     return TEST_FFMPEG_PATH
 
 @pytest.fixture
 def mock_ffmpeg_profiles_path(monkeypatch):
-    monkeypatch.setattr('gui.encoder_cli.FFMPEG_PROFILES_PATH', TEST_PROFILES_PATH)
+    monkeypatch.setattr('encoder_cli.FFMPEG_PROFILES_PATH', TEST_PROFILES_PATH)
     return TEST_PROFILES_PATH
 
 
@@ -89,8 +90,8 @@ def test_check_ffmpeg_not_found(mock_ffmpeg_path, monkeypatch):
     assert is_installed is False
     assert "FFmpeg not found" in message
 
-@patch('gui.encoder_cli.ProfileDataManager')
-@patch('gui.encoder_cli.create_audio_profiles_table')
+@patch('encoder_cli.ProfileDataManager')
+@patch('encoder_cli.create_audio_profiles_table')
 def test_show_profiles(mock_create_audio_profiles_table, mock_profile_data_manager, mock_ffmpeg_profiles_path, capsys):
     mock_create_audio_profiles_table.return_value = "Test Profile Table"
     mock_profile_data_manager_instance = mock_profile_data_manager.return_value
@@ -101,7 +102,7 @@ def test_show_profiles(mock_create_audio_profiles_table, mock_profile_data_manag
     captured = capsys.readouterr()
     assert "Test Profile Table" in captured.out
 
-@patch('gui.encoder_cli.Encoder')
+@patch('encoder_cli.Encoder')
 def test_encode(mock_encoder, capsys):
     mock_encoder_instance = mock_encoder.return_value
     encode("input.mp3", "output.mp3", "profileA", 'key1=value1')
@@ -110,7 +111,7 @@ def test_encode(mock_encoder, capsys):
     captured = capsys.readouterr()
     assert "Encoding complete!" in captured.out
 
-@patch('gui.encoder_cli.Encoder')
+@patch('encoder_cli.Encoder')
 def test_copy(mock_encoder, capsys):
     mock_encoder_instance = mock_encoder.return_value
     copy("input.mp3", "output.mp3", "key1=value1,key2=value2")
@@ -165,14 +166,14 @@ def test_main_encode_missing_profile(capsys):
     captured = capsys.readouterr()
     assert "Error: Profile is required" in captured.err
 
-@patch('gui.encoder_cli.encode')
+@patch('encoder_cli.encode')
 def test_main_encode_success(mock_encode, capsys):
     with patch('sys.argv', ['program.py', 'input.mp3', 'output.mp3', '-o', 'encode', '-p', 'profileA']):
         main()
     mock_encode.assert_called_once_with('input.mp3', 'output.mp3', 'profileA', None)
     captured = capsys.readouterr()
 
-@patch('gui.encoder_cli.copy')
+@patch('encoder_cli.copy')
 def test_main_copy_success(mock_copy, capsys):
     with patch('sys.argv', ['program.py', 'input.mp3', 'output.mp3', '-o', 'copy', '-m', 'key1=value1']):
         main()
@@ -182,7 +183,7 @@ def test_main_copy_success(mock_copy, capsys):
 @patch('sys.exit')
 def test_main_show_profiles(mock_exit, capsys):
     with patch('sys.argv', ['program.py', '-p']):
-        with patch('gui.encoder_cli.show_profiles') as mock_show_profiles:
+        with patch('encoder_cli.show_profiles') as mock_show_profiles:
             main()
             mock_show_profiles.assert_called_once()
             captured = capsys.readouterr()

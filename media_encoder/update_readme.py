@@ -1,7 +1,7 @@
 import os
 
 from data_manager import ProfileDataManager  # noqa: E402
-from encoder_cli import create_audio_profiles_table  # noqa: E402
+from utils import create_audio_profiles_table  # noqa: E402
 from config import FFMPEG_PROFILES_PATH
 
 def update_readme():
@@ -29,8 +29,6 @@ def update_readme():
         f.write(updated_content)
 
     print("README.md successfully updated!")    
-
-
 
 if __name__ == "__main__":
     update_readme()

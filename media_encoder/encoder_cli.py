@@ -6,7 +6,7 @@ from models import ProfileConstants
 from config import FFMPEG_PATH, FFMPEG_PROFILES_PATH
 from encoder import Encoder
 from data_manager import ProfileDataManager
-from gui.__init__ import create_audio_profiles_table
+from utils import create_audio_profiles_table
 
 def check_ffmpeg() -> Tuple[bool, str]:
     """Check if ffmpeg is installed in the dist folder.
